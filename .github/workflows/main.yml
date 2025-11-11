@@ -1,35 +1,27 @@
-name: CI/CD Helidon App
+name: Julia CI
 
 on:
   push:
-    branches: 
-      - helidon_kotlin_
+    branches: [ julia_ ]
+  pull_request:
+    branches: [ julia_ ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+    - name: Checkout repository
+      uses: actions/checkout@v2
 
-      - name: Set up JDK 21
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'temurin'
-          java-version: '21'
+    - name: Install Julia
+      uses: julia-actions/setup-julia@v1
+      with:
+        julia-version: '1.11'  # Specify the Julia version you want
+        # or use 'latest' to always use the latest version
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Build with Maven
-        run: mvn package -DskipTests
-
-      - name: Build Application docker - 2
-        run: |
-          docker build -t helidon-demo-kotlin:latest .
-          # docker run -p 8080:8080 helidon-demo-kotlin:latest
-          docker tag helidon-demo-kotlin sreedockerhub19/helidon-demo-kotlin:latest
-          docker push sreedockerhub19/helidon-demo-kotlin:latest
+    - name: Run all Julia files in the execute folder
+      run: |
+        for file in execute/*.jl; do
+          julia "$file"
+        done
