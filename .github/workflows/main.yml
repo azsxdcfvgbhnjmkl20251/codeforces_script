@@ -1,68 +1,32 @@
-name: Java CI
+name: R Hello World Workflow
 
 on:
   push:
-    branches: [ java_cucumber ]
+    branches:
+      - R_  # Trigger on push to 'main' branch
   pull_request:
-    branches: [ java_cucumber ]
+    branches:
+      - R_  # Trigger on pull request to 'main' branch
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        java-version: [ '21' ]
-
+  hello-world:
+    runs-on: ubuntu-latest  # You can also use macos-latest or windows-latest
+    
     steps:
-    - name: Checkout repository
+    # Step 1: Checkout code
+    - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Set up JDK ${{ matrix.java-version }}
-      uses: actions/setup-java@v2
+    # Step 2: Set up R
+    - name: Set up R
+      uses: r-lib/actions/setup-r@v2
       with:
-        java-version: ${{ matrix.java-version }}
-        distribution: 'temurin'
-        java-package: 'jdk'
-        architecture: 'x64'
-        check-latest: false
-        overwrite-settings: true
-        job-status: 'success'
+        r-version: '4.3.0'  # Specify the R version you want
 
-    - name: Verify Java version
-      run: java -version
-
-    - name: Set up Maven
-      uses: actions/setup-java@v2
-      with:
-        distribution: 'temurin'
-        java-version: ${{ matrix.java-version }}
-
-    - name: Build with Maven
-      run: mvn clean install
-
-    - name: Run with Maven
-      run: mvn test
-
-    - name: Upload Cucumber JSON report as artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: cucumber-json-report
-        path: target/cucumber-reports/Cucumber.json
-
-    - name: Build with Maven
-      run: mvn clean package
-
-    - name: Generate Cucumber HTML Report
-      run: mvn exec:java -Dexec.mainClass="com.example.GenerateReport"
-
-    - name: Upload Cucumber HTML report as artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: cucumber-html-report
-        path: target/cucumber-reports
-
-    - name: Build RestAssured
+    # Step 3: Run the Hello World script
+    - name: Run Hello World R Script
       run: |
-       cd restassured_standalone
-       mvn clean compile exec:java
+        Rscript hello_world.R  # Run the 'hello_world.R' script
+        Rscript -e "print('Hello, R embedded world!')"
+        Rscript -e "system(\"echo 'Hello from the R shell!'\")"
+

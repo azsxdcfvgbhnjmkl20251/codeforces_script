@@ -3,11 +3,7 @@ execute/*.class
 .idea
 codeforces_script.iml
 target
-.qodo
-.gradle
-.vscode
-Nielsen/
-Python/
-bito__/
-build/
-*.jar
+node_modules
+.mypy_cache
+.gradle/
+build
