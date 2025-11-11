@@ -1,76 +1,62 @@
-name: CI
+name: C and C++ Build and Run
 
 on:
   push:
-    branches: [ clojure_script ]
+    branches:
+      - cpp_  # Change this to your default branch
+  pull_request:
 
 jobs:
-  build-and-run:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '20'
+      - name: Set up GCC
+        run: sudo apt-get install g++
 
-    # - name: Install planck
-    #   run: |
-    #     wget https://planck-repl.org/releases/2.25.0-debian-9.0-x86_64/planck
-    #     chmod +x planck
-    #     sudo mv planck /usr/local/bin/
-    #     sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.0-37
-    #     planck -e "(println (+ 2 3))"
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
 
-    - name: Install nbb
-      run: |
-        npm install nbb -g
-        nbb -e '(+ 1 2 3)'
-        npm install csv-parse shelljs term-size zx
-        npm run start
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install flask
+          sudo apt-get update
+          sudo apt-get install -y libboost-all-dev nasm  # Install Boost libraries
 
-    - name: nbb inline
-      run: |
-        nbb -e '(ns hello
-          (:require ["csv-parse/sync" :as csv]
-                    ["fs" :as fs]
-                    ["path" :as path]
-                    ["shelljs$default" :as sh]
-                    ["term-size$default" :as term-size]
-                    ["zx" :refer [$]]
-                    ["zx$fs" :as zxfs]
-                    [nbb.core :refer [*file* await]]))
-        (println "Hello from nbb!")
-        (println "Sum of 1+2+3 is" (+ 1 2 3))
-        (println "Files in current directory:")
-        (println (fs/readdirSync "."))
-        (prn (path/resolve "."))
-        (prn (term-size))
-        ; (println (count (str (fs/readFileSync *file*))))
-        (prn (sh/ls "."))
-        (prn (csv/parse "foo,bar"))
-        ; (prn (zxfs/existsSync *file*))
-        (await ($ #js ["ls"]))'
+      - name: Compile C++ programs
+        run: |
+          cd cpp_  # Change to the directory containing C++ files
+          for file in *.cpp; do
+            g++ "$file" -o "${file%.cpp}" -lboost_system -lboost_filesystem -lboost_regex    # Link Boost libraries , and Compile each C++ file to an executable
+          done
 
-    - name: Install dependencies
-      run: |
-        cd my-cljs-node-app
-        npm install
-        npm install left-pad
-        npx shadow-cljs compile app
-        node out/main.js
+      - name: Run C++ programs
+        run: |
+          cd cpp_
+          for exe in *; do
+            if [[ -x "$exe" ]]; then  # Check if it is an executable
+              ./"$exe"  # Run the executable
+            fi
+          done
 
-    - name: Install lumo
-      run: |
-        npm install -g lumo-cljs
-        lumo -e "(println (+ 1 2))"
+      - name: Compile C programs
+        run: |
+          cd c_  # Change to the directory containing C files
+          for file in *.c; do
+            gcc "$file" -o "${file%.c}"  # Compile each C file to an executable
+          done
 
-    - name: Eval with shadow-cljs
-      run: |
-        cd my-cljs-node-app
-        npm install
-        npx shadow-cljs compile eval
-        node out/eval.js
+      - name: Run C programs
+        run: |
+          cd c_
+          for exe in *; do
+            if [[ -x "$exe" ]]; then  # Check if it is an executable
+              ./"$exe"  # Run the executable
+            fi
+          done

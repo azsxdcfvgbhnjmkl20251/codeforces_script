@@ -1,11 +1,10 @@
 .DS_Store
-execute/*.class
+src/main/kotlin/com/execute/*.class
+src/main/kotlin/com/execute/*.jar
+src/main/kotlin/com/execute/out
 .idea
-codeforces_script.iml
-target
-node_modules
+.mypy_cache
+interviews
 .gradle
-.vscode
-*.class
-META-INF/
 build
+target
