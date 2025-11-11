@@ -2,29 +2,26 @@ name: Java CI
 
 on:
   push:
-    branches:
-      - javac_   # Adjust the branch name as needed
+    branches: [ java_cucumber ]
+  pull_request:
+    branches: [ java_cucumber ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        java-version: [ '21' ]
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
 
-    - name: Install C++ Compiler
-      run: sudo apt-get install g++
-
-    - name: Set up Rust
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable  # Use the stable version of Rust
-
-    - name: Set up JDK 21
+    - name: Set up JDK ${{ matrix.java-version }}
       uses: actions/setup-java@v2
       with:
-        java-version: '21'
+        java-version: ${{ matrix.java-version }}
         distribution: 'temurin'
         java-package: 'jdk'
         architecture: 'x64'
@@ -32,47 +29,40 @@ jobs:
         overwrite-settings: true
         job-status: 'success'
 
-    - name: Compile and Run Java Files
+    - name: Verify Java version
+      run: java -version
+
+    - name: Set up Maven
+      uses: actions/setup-java@v2
+      with:
+        distribution: 'temurin'
+        java-version: ${{ matrix.java-version }}
+
+    - name: Build with Maven
+      run: mvn clean install
+
+    - name: Run with Maven
+      run: mvn test
+
+    - name: Upload Cucumber JSON report as artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: cucumber-json-report
+        path: target/cucumber-reports/Cucumber.json
+
+    - name: Build with Maven
+      run: mvn clean package
+
+    - name: Generate Cucumber HTML Report
+      run: mvn exec:java -Dexec.mainClass="com.example.GenerateReport"
+
+    - name: Upload Cucumber HTML report as artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: cucumber-html-report
+        path: target/cucumber-reports
+
+    - name: Build RestAssured
       run: |
-        #!/bin/bash
-        # Compile all Java files
-        cd execute 
-        
-        # Download Guava jar from Maven Central
-        wget https://repo1.maven.org/maven2/com/google/guava/guava/33.0.0-jre/guava-33.0.0-jre.jar -O guava.jar
-
-        # Compile all Java files with Guava on the classpath
-        javac -cp guava.jar *.java
-
-        # Check if compilation was successful
-        if [ $? -eq 0 ]; then
-            # Run each Java file in sequence
-            for file in *.java; do
-                # Get the base name of the file (without .java)
-                class_name="${file%.java}"
-                echo "Class $class_name..."
-                java -cp ".:guava.jar" "$class_name"
-            done
-        else
-            echo "Compilation failed."
-            exit 1
-        fi
-
-    - name: Compile and Run Java Files 1 - CPP and Rust
-      run: |
-        #!/bin/bash
-        # Compile all Java files
-        cd execute1 && javac *.java
-        # Check if compilation was successful
-        if [ $? -eq 0 ]; then
-            # Run each Java file in sequence
-            for file in *.java; do
-                # Get the base name of the file (without .java)
-                class_name="${file%.java}"
-                echo "Class $class_name..."
-                java "$class_name"
-            done
-        else
-            echo "Compilation failed."
-            exit 1
-        fi
+       cd restassured_standalone
+       mvn clean compile exec:java
