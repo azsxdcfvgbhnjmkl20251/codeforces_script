@@ -1,30 +1,101 @@
-name: Docker Workflow
+name: CI
 
 on:
   push:
     branches:
-      - micronaut_kotlin_
+      - objective_c_
 
 jobs:
-  build-and-run:
-    name: Docker run workflow
-    runs-on: ubuntu-latest
+  build:
+    runs-on: macos-latest
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-      - name: Checkout repository
-        uses: actions/checkout@v4  # ⬅️ This was missing
+      # - name: Install Xcode Command Line Tools
+      #   run: |
+      #     xcode-select --install
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-############################### Kotlin ###############################
-      - name: Build Application docker - 2
+      - name: Verify Python Installation
         run: |
-          docker build -t micronaut-kotlin .
-          # docker run -p 8080:8080 micronaut-kotlin
-          docker tag micronaut-kotlin sreedockerhub19/micronaut-kotlin:latest
-          docker push sreedockerhub19/micronaut-kotlin:latest
+          which python3
+          python3 --version
+
+
+      - name: Build the project
+        run: make
+
+      - name: Run the program
+        run: ./HelloWorld
+
+      - name: Compile and Run Objective-C++
+        run: |
+          clang -framework Foundation -o hello hello.m
+          ./hello
+          clang++ -std=c++11 -framework Foundation -o run_python_node hello.mm
+          ./run_python_node
+          clang++ -std=c++11 -framework Foundation -o find_path hello1.mm
+          ./find_path
+
+
+      - name: List Foundation Framework Headers
+        run: |
+          #!/bin/bash
+
+          # Array of potential paths to check for Foundation.h
+          search_paths=(
+              "/usr/include/GNUstep/Foundation/Foundation.h"
+              "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/Foundation.framework/Headers/Foundation.h"
+              "/usr/local/include/Foundation/Foundation.h"
+              "/usr/include/Foundation/Foundation.h"
+          )
+
+          # Flag to track if the file was found
+          found=false
+
+          # Check each path
+          for path in "${search_paths[@]}"; do
+              if [[ -f "$path" ]]; then
+                  echo "Found Foundation.h at: $path"
+                  found=true
+                  break
+              fi
+          done
+
+          # If not found, print a message
+          if ! $found; then
+              echo "Foundation.h not found in the specified paths."
+          fi
+
+
+      - name: Compile and run Objective-C++ code from file
+        run: |
+            # Create the Objective-C++ source file
+            echo '#import </Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/Foundation.framework/Headers/Foundation.h>
+
+            int main(int argc, const char * argv[]) {
+                @autoreleasepool {
+                    NSLog(@"Hello from Objective-C++ on GitHub Actions from here!");
+                }
+                return 0;
+            }' > hellos.mm
+
+            # Compile the source file
+            clang++ -std=c++11 -framework Foundation -o hellos hellos.mm
+
+            # Run the compiled executable
+            ./hellos
+
+
+      - name: Compile and run the Objective-C++ code using echo piping
+        run: |
+              echo '#import </Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/Foundation.framework/Headers/Foundation.h>
+          
+              int main(int argc, const char * argv[]) {
+                  @autoreleasepool {
+                      NSLog(@"Hello from Objective-C++ on GitHub Actions from here inline!");
+                  }
+                  return 0;
+              }' | clang++ -std=c++11 -framework Foundation -x objective-c++ -o hello0 - && ./hello0
+          
