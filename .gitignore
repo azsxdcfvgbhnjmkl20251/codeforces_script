@@ -1,10 +1,31 @@
+**/*.log
+
 .DS_Store
-src/main/kotlin/com/execute/*.class
-src/main/kotlin/com/execute/*.jar
-src/main/kotlin/com/execute/out
-.idea
-.mypy_cache
-interviews
+
+.vscode
+
+
+# Dependency directory
+# https://www.npmjs.org/doc/misc/npm-faq.html#should-i-check-my-node_modules-folder-into-git
+node_modules
+cypress/videos
+cypress/screenshots
+cypress/reports
+cypress/results
+cypress/downloads
+
+# Values in here will overwrite conflicting environment variables in your Cypress configuration.
+cypress.env.json
+
+cypress_docker
+
 .gradle
+.idea
+annotations_
+bito__
 build
+Nielsen
+Python
+dependency-reduced-pom.xml
 target
+*.jar
