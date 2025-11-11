@@ -1,0 +1,82 @@
+name: Scala .sc Script Runner
+
+on:
+  push:
+    branches:
+      - kotlin_
+  pull_request:
+    branches:
+      - kotlin_
+
+jobs:
+  run-sc-scripts:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        scala-version: [2.13.12] # Can add more versions later
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Setup Coursier
+        uses: coursier/setup-action@v1
+        with:
+          jvm: temurin:21
+
+      - name: Install Scala tools
+        run: |
+          cs install scala:${{ matrix.scala-version }} \
+                     scalac:${{ matrix.scala-version }} \
+                     scala-cli \
+                     ammonite:3.0.0-M1
+
+      - name: Check versions
+        run: |
+          scala -version
+          scalac -version
+          amm --version
+          scala-cli version
+
+      - name: Run .sc scripts with scala
+        run: |
+          mkdir -p scripts
+          echo 'println("Hello from scala .sc!")' > scripts/hello_scala.sc
+          echo 'val x = 42; println(s"The answer is $x")' > scripts/vars.sc
+          cd scripts
+          scala hello_scala.sc
+          scala vars.sc
+
+      - name: Run .sc with scala-cli run
+        run: |
+          cd scripts
+          scala-cli run --scala ${{ matrix.scala-version }} hello_scala.sc
+          scala-cli run --scala ${{ matrix.scala-version }} vars.sc
+
+      - name: Run .sc with scala-cli repl
+        run: |
+          # Scala CLI REPL with .sc-like code
+          scala-cli repl --scala ${{ matrix.scala-version }} <<'EOF'
+          println("""
+          Hello from Scala CLI REPL in batch mode!
+          """)
+          val numbers = List(1, 2, 3)
+          println(s"Sum: ${numbers.sum}")
+          EOF
+
+      - name: Run .sc with Ammonite
+        run: |
+          cd scripts
+          amm hello_scala.sc
+          amm vars.sc
+
+      - name: Run .sc with Ammonite repl
+        run: |
+          amm -c '
+          println("""
+          Hello from Ammonite repl!
+          """)
+          val numbers = List(1, 2, 3)
+          println(s"Sum: ${numbers.sum}")
+          '

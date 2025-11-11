@@ -1,11 +1,20 @@
 .DS_Store
-src/main/kotlin/com/execute/*.class
-src/main/kotlin/com/execute/*.jar
-src/main/kotlin/com/execute/out
+execute/*.class
 .idea
-.gradle/
-build/
-target/classes/
-target/kotlin-in-java-1.0-SNAPSHOT.jar
-target/maven-archiver/
-target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst
+codeforces_script.iml
+target
+node_modules
+.gradle
+.vscode
+*.class
+META-INF/
+
+
+# scala
+# Ignore everything in interviews/scala3_
+interviews/scala3_/*
+interviews/scala3_/**
+# Allow .scala and .sc files (recursively)
+!interviews/scala3_/**/*.scala
+!interviews/scala3_/**/*.sc
+build

@@ -3,54 +3,9 @@ name: Build and Run Kotlin
 on:
   push:
     branches:
-      - kotlin1_
-  pull_request:
-    branches:
-      - kotlin1_
-
-permissions:
-  contents: write  # Allows write access to the repository contents
-  issues: write    # Optional: Allows write access to issues
-  pull-requests: write  # Optional: Allows write access to pull requests
+      - kotlin_
 
 jobs:
-
-  build1:
-      runs-on: ubuntu-latest
-
-      steps:
-        - name: Check out code
-          uses: actions/checkout@v2
-
-        - name: Compile and Run Kotlin Code
-          run: |
-            #!/bin/bash
-
-            # Navigate to the target directory and create the necessary directories
-            cd src/main/kotlin/com/execute
-            mkdir -p out/classes
-
-            # Compile and run each .kt file in the current directory, excluding Utils.kt
-            for file in *.kt; do
-                # Skip Utils.kt
-                if [[ "$file" == "Utils.kt" ]]; then
-                    continue
-                fi
-
-                # Check if the file exists
-                if [[ -f "$file" ]]; then
-                    # Get the base name of the file without the extension
-                    base_name="${file%.kt}"
-
-                    # Compile the Kotlin file along with Utils.kt
-                    kotlinc -cp out/classes -d out/classes "$file" Utils.kt
-
-                    # Run the compiled Kotlin class
-                    kotlin -cp out/classes com.execute."$base_name"Kt
-                fi
-            done
-
-
   build:
     runs-on: ubuntu-latest
 
@@ -64,36 +19,77 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
+      - name: Set up Gradle
+        uses: gradle/gradle-build-action@v2
+
+
       - name: Install Kotlin
         run: |
+        
+          # Create the Gradle project structure (if not already there)
+          mkdir gradle_inline && cd gradle_inline
+          gradle init --type basic
+
+          # Overwrite build.gradle.kts with our inline shell runner
+          cat > build.gradle.kts <<'EOF'
+          tasks.register<Exec>("runShellInline") {
+              commandLine("bash", "-c", "echo $((42*42))")
+          }
+          EOF
+
+          # Run the task
+          gradle -q runShellInline
+
+
           curl -s https://get.sdkman.io | bash
           source "$HOME/.sdkman/bin/sdkman-init.sh"
           sdk install kotlin
+          sdk install kscript
+          kotlin -version
 
-      - name: Compile and Run Kotlin Code
+          # chmod +x hello.kts
+          # ./hello.kts
+
+      - name: Compile Kotlin Code
         run: |
-          #!/bin/bash
+          kotlinc src/main/kotlin/com/example/Main.kt -include-runtime -d Main.jar
+          kotlinc src/main/kotlin/com/example/Subs.kt -include-runtime -d Subs.jar
+          kotlinc src/main/kotlin/com/example/java_inMemory_inKotlin.kt -include-runtime -d java_inMemory_inKotlin.jar
+          kotlinc src/main/kotlin/com/example/cpp_Java_inMemory_inKotlin.kt -include-runtime -d cpp_Java_inMemory_inKotlin.jar
+          kotlinc src/main/kotlin/com/example/cpp_inJava_inMemory_inKotlin.kt -include-runtime -d cpp_inJava_inMemory_inKotlin.jar
 
-          # Navigate to the target directory and create the necessary directories
-          cd src/main/kotlin/com/execute
-          mkdir -p out/classes
 
-          # Compile and run each .kt file in the current directory, excluding Utils.kt
-          for file in *.kt; do
-              # Skip Utils.kt
-              if [[ "$file" == "Utils.kt" ]]; then
-                  continue
-              fi
 
-              # Check if the file exists
-              if [[ -f "$file" ]]; then
-                  # Get the base name of the file without the extension
-                  base_name="${file%.kt}"
+      - name: Run Kotlin Application
+        run: |
+          cd interviews/kotlin_
+          kotlinc -script leetcode.kts
 
-                  # Compile the Kotlin file along with Utils.kt
-                  kotlinc -cp out/classes -d out/classes "$file" Utils.kt
+          chmod +x execution.sh
+          ./execution.sh
 
-                  # Run the compiled Kotlin class
-                  kotlin -cp out/classes com.execute."$base_name"Kt
-              fi
-          done
+          cd ../..
+          java -jar Main.jar
+          java -jar Subs.jar
+          java -jar java_inMemory_inKotlin.jar 
+          java -jar cpp_Java_inMemory_inKotlin.jar
+          java -jar cpp_inJava_inMemory_inKotlin.jar
+
+
+          echo 'print(245)' | kotlin -Xrepl
+          echo 'print(2454)' | kotlinc -Xrepl
+
+
+      - name: Install Kotlin Native
+        run: |
+          curl -L https://github.com/JetBrains/kotlin/releases/download/v2.2.0/kotlin-native-prebuilt-linux-x86_64-2.2.0.tar.gz -o kotlin-native.tar.gz
+          tar -xzf kotlin-native.tar.gz
+          sudo mv kotlin-native-* /opt/kotlin-native
+          sudo ln -s /opt/kotlin-native/bin/* /usr/local/bin/
+          kotlinc-native -version
+
+      - name: Kotlin Native
+        run: |
+          echo 'fun main() { println("Hello from Kotlin Native!") }' > native.kt
+          kotlinc-native native.kt -o native-app
+          ./native-app.kexe

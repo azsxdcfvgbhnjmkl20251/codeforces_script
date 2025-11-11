@@ -1,0 +1,165 @@
+name: Build and Run Scala
+on:
+  push:
+    branches:
+      - kotlin_
+  pull_request:
+    branches:
+      - kotlin_
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+############################################ scala 2.13.12 ############################################
+
+      # sbt && sbt <<< : https://github.com/sreegithub19/codeforces_script/blob/scala_/.github/workflows/main.yml
+      # gradle: https://github.com/sreegithub19/codeforces_script/blob/scala_/.github/workflows/main_gradle.yml
+      # maven: https://github.com/sreegithub19/codeforces_script/blob/scala_/.github/workflows/main_maven.yml
+      # VirtusLab/scala-cli-setup@v1: https://github.com/sreegithub19/codeforces_script/blob/kotlin_/.github/workflows/scala_.yml
+      # Coursier with .scala : https://github.com/sreegithub19/codeforces_script/blob/kotlin_/.github/workflows/main_scala2_coursier.yml
+      # Coursier with .sc : https://github.com/sreegithub19/codeforces_script/blob/kotlin_/.github/workflows/main_sc2_coursier.yml
+
+      - name: Set up Scala (for sbt)
+        uses: olafurpg/setup-scala@v12
+        with:
+          scala-version: '2.13.12'  # The Scala version you want to use
+
+      - name: Install and use Scala 2.13.12 with SDKMAN and run for apt
+        run: |
+            cd interviews/scala2_
+            ############################################ apt (only for scala 2) -> (scalac && scala) ############################################
+            sudo apt install -y scala
+            scalac Hello1.scala && scala Hello1
+            scalac Hello2.scala && scala Hello2
+            ############################################ apt (only for scala 2) -> scala && scala -e ############################################
+            scala Hello1.scala
+            scala Hello2.scala
+            scala -e "println(22)"
+            # echo 'println("""Hello,
+            # Scala from echo of sdk!
+            # This is a multiline string!""")' | scala -Dscala.repl.no-tty=true
+            # scala <<< 'println("""Hello,
+            # Scala from scala REPL from scala 2.13.12!
+            # This is a multiline string!""")' | tail -n +8
+            sudo apt remove -y scala
+      # --- Fix: Combine all SDKMAN commands into a single 'run' block ---
+      - name: Install and use Scala 2.13.12 with SDKMAN and run
+        run: |
+          # The next two lines install SDKMAN and set up the environment
+          curl -s https://get.sdkman.io | bash
+          source "$HOME/.sdkman/bin/sdkman-init.sh"
+          curl -fL https://github.com/VirtusLab/scala-cli/releases/download/v1.8.4/scala-cli-x86_64-pc-linux.gz \
+            | gzip -d > scala-cli
+          chmod +x scala-cli
+          sudo mv scala-cli /usr/local/bin/
+          scala-cli version
+          sdk install scala 2.13.12
+          sdk use scala 2.13.12
+          cd interviews/scala2_
+
+          ############################################ sdk -> (scalac && scala) ############################################
+          scalac Hello1.scala && scala Hello1
+          scalac Hello2.scala && scala Hello2
+          ############################################  sdk -> scala && scala -e && echo ############################################
+          scala Hello1.scala
+          scala Hello2.scala
+          scala -e "println(22)"
+          echo 'println("""Hello,
+          Scala from echo of sdk!
+          This is a multiline string!""")' | scala -Dscala.repl.no-tty=true
+          # scala <<< 'println("""Hello,
+          # Scala from scala REPL from scala 2.13.12!
+          # This is a multiline string!""")' | tail -n +8
+          sdk uninstall scala 2.13.12 --force
+          ############################################ scala-cli && scala-cli repl && scala-cli --scala -e ############################################
+          scala-cli run Hello1.scala
+          scala-cli run Hello2.scala
+          scala-cli repl <<EOF
+          val greeting = "Hello, REPL!"
+          println(greeting)
+          val numbers = List(1, 2, 3)
+          val sum = numbers.sum
+          println(s"The sum of numbers is: $sum")
+          EOF
+
+          scala-cli --scala 2.13.12 -e "println(42 + 1)"
+          
+############################################ scala 3.3.1 ############################################
+
+      # sbt && sbt <<< : https://github.com/sreegithub19/codeforces_script/blob/scala_/.github/workflows/main.yml
+      # gradle: https://github.com/sreegithub19/codeforces_script/blob/scala_/.github/workflows/main_gradle.yml
+      # maven: https://github.com/sreegithub19/codeforces_script/blob/scala_/.github/workflows/main_maven.yml
+      # VirtusLab/scala-cli-setup@v1: https://github.com/sreegithub19/codeforces_script/blob/kotlin_/.github/workflows/scala_.yml
+      # Coursier with .scala : https://github.com/sreegithub19/codeforces_script/blob/kotlin_/.github/workflows/main_scala3_coursier.yml
+      # Coursier with .sc : https://github.com/sreegithub19/codeforces_script/blob/kotlin_/.github/workflows/main_sc3_coursier.yml
+
+
+      - name: Set up Scala (for sbt)
+        uses: olafurpg/setup-scala@v12
+        with:
+          scala-version: '3.3.1'  # The Scala version you want to use
+
+      - name: Install and use Scala 3.3.1 with SDKMAN and run
+        run: |
+          # The next two lines install SDKMAN and set up the environment
+          curl -s https://get.sdkman.io | bash
+          source "$HOME/.sdkman/bin/sdkman-init.sh"
+          
+          curl -fL https://github.com/VirtusLab/scala-cli/releases/download/v1.8.4/scala-cli-x86_64-pc-linux.gz \
+            | gzip -d > scala-cli
+          chmod +x scala-cli
+          sudo mv scala-cli /usr/local/bin/
+          scala-cli version
+    
+    
+          # Now that SDKMAN is in the PATH, all 'sdk' commands will work
+          # within this single step.
+          sdk install scala 3.3.1
+          sdk use scala 3.3.1
+          
+          cd interviews/scala3_
+          
+          ############################################  sdk -> (scalac && scala) ############################################
+          scalac Hello1.scala && scala Hello1
+          scalac Hello2.scala && scala Hello2
+          
+          ############################################  sdk -> scala && scala -e ############################################
+          scala Hello.scala
+          scala Hello1.scala
+          scala Hello2.scala
+
+          scala -e "println(22)"
+
+          # echo 'println("""Hello,
+          # Scala from echo of sdk!
+          # This is a multiline string!""")' | scala -Dscala.repl.no-tty=true
+
+          # scala <<< 'println("""Hello,
+          # Scala from scala REPL from scala 3.3.1!
+          # This is a multiline string!""")' | tail -n +8
+
+
+          sdk uninstall scala 3.3.1 --force
+          
+          ############################################ scala-cli && scala-cli repl && scala-cli --scala -e ############################################
+          scala-cli run Hello.scala
+          scala-cli run Hello1.scala
+          scala-cli run Hello2.scala
+
+          scala-cli repl <<EOF
+          val greeting = "Hello, REPL!"
+          println(greeting)
+          val numbers = List(1, 2, 3)
+          val sum = numbers.sum
+          println(s"The sum of numbers is: $sum")
+          EOF
+
+          scala-cli --scala 3.3.1 -e "println(42 + 1)"
+
+          sudo rm /usr/local/bin/scala-cli
+
+          
+          

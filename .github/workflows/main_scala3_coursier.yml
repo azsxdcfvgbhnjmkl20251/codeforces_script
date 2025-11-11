@@ -1,0 +1,64 @@
+name: Build and Run Scala Coursier
+on:
+  push:
+    branches:
+      - kotlin_
+  pull_request:
+    branches:
+      - kotlin_
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Setup Coursier
+        uses: coursier/setup-action@v1
+        with:
+          jvm: temurin:21
+          apps: scala scalac ammonite scala-cli
+
+      - name: Check versions from Coursier
+        run: |
+          echo "Scala version:"
+          scala -version
+          echo "Scalac version:"
+          scalac -version
+          echo "Ammonite version:"
+          amm --version
+          echo "Scala CLI version:"
+          scala-cli version
+
+      - name: Compile & run with scalac + java
+        run: |
+          cd interviews/scala3_
+          # Fetch Scala 3 dependencies and join them into a colon-separated string
+          JARS=$(cs fetch org.scala-lang:scala3-library_3:3.3.1 org.scala-lang:scala-library:2.13.12 | tr '\n' ':')
+          scalac Hello1.scala
+          java -cp ".:${JARS}" Hello1
+          scalac Hello2.scala
+          java -cp ".:${JARS}" Hello2
+          
+      - name: Run
+        run: |
+          cd interviews/scala3_
+          ############################################ sdk -> scala (interpreted source) && scala -e && echo ############################################
+          scala Hello.scala
+          scala Hello1.scala
+          scala Hello2.scala
+          scala -e "println(22)"
+          echo 'println("""Hello,
+          Scala from echo of sdk!
+          This is a multiline string!""")' | scala -Dscala.repl.no-tty=true
+          ############################################ scala-cli && scala-cli repl ############################################
+          scala-cli run Hello.scala
+          scala-cli run Hello1.scala
+          scala-cli run Hello2.scala
+          scala-cli repl <<EOF
+          val greeting = "Hello, REPL!"
+          println(greeting)
+          val numbers = List(1, 2, 3)
+          val sum = numbers.sum
+          println(s"The sum of numbers is: $sum")
+          EOF
