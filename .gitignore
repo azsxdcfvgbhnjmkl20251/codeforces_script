@@ -1,20 +1,10 @@
 .DS_Store
-execute/*.class
+src/main/kotlin/com/execute/*.class
+src/main/kotlin/com/execute/*.jar
+src/main/kotlin/com/execute/out
 .idea
-codeforces_script.iml
-target
+.mypy_cache
 node_modules
-.gradle
-.vscode
-*.class
-META-INF/
-
-
-# scala
-# Ignore everything in interviews/scala3_
-interviews/scala3_/*
-interviews/scala3_/**
-# Allow .scala and .sc files (recursively)
-!interviews/scala3_/**/*.scala
-!interviews/scala3_/**/*.sc
-build
+.gradle/
+build/
+target/
