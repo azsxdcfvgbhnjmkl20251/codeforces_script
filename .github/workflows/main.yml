@@ -1,0 +1,36 @@
+name: Ruby CI
+
+on:
+  push:
+    branches: [ ruby_, main ]
+  pull_request:
+    branches: [ ruby_,main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '3.3.5'  # Specify the Ruby version you want
+      
+    - name: Install dependencies
+      run: |
+        gem install bundler
+        # You can add other gems if needed in the Gemfile
+
+    - name: Run all Ruby files in the execute folder
+      run: |
+        for file in execute/*.rb; do
+          ruby "$file"
+        done
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+          node-version: 18
