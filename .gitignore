@@ -3,9 +3,6 @@ codeforces_script.iml
 target
 .idea
 TempProgram
-node_modules
-.vscode
-.qodo
 .mypy_cache
-.gradle
-build
+.gradle/
+build/
