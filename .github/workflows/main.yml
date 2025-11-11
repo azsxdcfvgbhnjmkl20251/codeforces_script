@@ -1,163 +1,35 @@
-name: Go Hello World
+name: CI/CD Helidon App
 
 on:
   push:
-    branches:
-      - golang_
-  pull_request:
+    branches: 
+      - helidon_java_
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      # Step 1: Checkout the code
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v2
+      - name: Set up JDK 21
+        uses: actions/setup-java@v3
         with:
-          node-version: '18'
+          distribution: 'temurin'
+          java-version: '21'
 
-      - name: Install dependencies
-        run: |
-         npm install sprintf-js playwright
-         npx playwright install
-
-      # Step 2: Set up Go environment
-      - name: Set up Go
-        uses: actions/setup-go@v4
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
         with:
-          go-version: 1.21  # Specify the Go version you want to use
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # Step 3: Install dependencies (if any)
-      - name: Install dependencies
-        working-directory: ./execute
-        run: go mod tidy
+      - name: Build with Maven
+        run: mvn package -DskipTests
 
-      - name: Clone goeval repository
+      - name: Build Application docker - 2
         run: |
-          git clone https://github.com/dolmen-go/goeval.git /tmp/goeval
-  
-      - name: Install goeval
-        run: |
-          cd /tmp/goeval
-          go install .
-
-      - name: Add Go bin directory to PATH
-        run: |
-          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
-
-      - name: Verify goeval installation
-        run: |
-          goeval -i fmt 'fmt.Println("Hello, Goeval world with fmt!")'  # Or run any command to verify goeval is installed
-
-    
-      - name: Run Go code with goeval
-        run: |
-            goeval -i fmt -i math 'fmt.Printf("The square root of 16 is %.2f\n", math.Sqrt(16))'
-
-      - name: Run all Go files in the  folders
-        run: |
-          cd execute  # Change to the 'execute' directory
-          for file in *.go; do
-            echo "Running $file"
-            go run "$file"  # Run each Go file
-          done
-          cd ..
-
-          cd 2_intro  
-          for file in *.go; do
-            echo "Running $file"
-            go run "$file"  # Run each Go file
-          done
-          cd ..
-
-      - name: Run Go Server
-        run: |
-          mkdir -p videos
-          nohup go run server_/server_1.go &
-          sleep 10  # Wait for the Go server to start
-      
-      - name: Capture HTML content from localhost
-        run: |
-                # Fetch the HTML content from the server running at localhost:8080
-                curl http://localhost:8080 -o videos/index.html
-                curl -v http://localhost:8080
-                curl http://localhost:8080/hello -o videos/hello.html
-                curl -v http://localhost:8080/hello
-                curl http://localhost:8080/hello2 -o videos/hello2.html
-                curl -v http://localhost:8080/hello2
-
-      - name: Take screenshot of the page
-        run: |
-                  npm install playwright
-                  npx playwright install
-                  npx playwright screenshot http://localhost:8080 videos/index.png
-                  npx playwright screenshot http://localhost:8080/hello videos/hello.png
-                  npx playwright screenshot http://localhost:8080/hello2 videos/hello2.png
-        
-      - name: Record video of the pages
-        run: |
-                    npx playwright install
-                    node -e "
-                      const { chromium } = require('playwright');
-                      (async () => {
-                        const browser = await chromium.launch();
-                        const context = await browser.newContext({
-                          recordVideo: {
-                            dir: 'videos/', // Directory to save the video
-                            size: { width: 1280, height: 720 } // Optional: Set video resolution
-                          }
-                        });
-                        const page = await context.newPage();
-
-                        // Function to display the current endpoint on the page
-                        async function displayEndpoint(endpoint) {
-                          await page.evaluate((endpoint) => {
-                            const existing = document.getElementById('endpoint-label');
-                            if (existing) {
-                              existing.innerText = 'Currently visiting: '+endpoint;
-                            } else {
-                              const div = document.createElement('div');
-                              div.id = 'endpoint-label';
-                              div.style.position = 'fixed';
-                              div.style.top = '10px';
-                              div.style.left = '10px';
-                              div.style.padding = '10px';
-                              div.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
-                              div.style.color = 'white';
-                              div.style.fontSize = '20px';
-                              div.innerText = 'Currently visiting: '+endpoint;
-                              document.body.appendChild(div);
-                            }
-                          }, endpoint);
-                        }
-
-
-                        await page.goto('http://localhost:8080');
-                        await displayEndpoint('/'); // Show the current endpoint on the page
-                        await page.waitForTimeout(2000); // Wait for 2 seconds
-
-                        await page.goto('http://localhost:8080/hello');
-                        await displayEndpoint('/hello'); // Show the current endpoint on the page
-                        await page.waitForTimeout(2000); // Wait for 2 seconds
-
-                        await page.goto('http://localhost:8080/hello2');
-                        await displayEndpoint('/hello2'); // Show the current endpoint on the page
-                        await page.waitForTimeout(2000); // Wait for 2 seconds
-
-                        // Close the browser (this finalizes the video recording)
-                        await browser.close();
-                      })();
-                    "
-                
-        
-        
-      - name: Upload HTML file as artifact
-        uses: actions/upload-artifact@v4
-        with:
-            name: captured-html-artifacts
-            path: |
-             videos/
+          docker build -t helidon-demo:latest .
+          # docker run -d -p 8080:8080 helidon-demo:latest
+          docker tag helidon-demo sreedockerhub19/helidon-demo:latest
+          docker push sreedockerhub19/helidon-demo:latest
