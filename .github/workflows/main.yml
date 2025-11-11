@@ -3,7 +3,7 @@ name: CI/CD Helidon App
 on:
   push:
     branches: 
-      - helidon_java_
+      - helidon_kotlin_
 
 jobs:
   build:
@@ -29,7 +29,7 @@ jobs:
 
       - name: Build Application docker - 2
         run: |
-          docker build -t helidon-demo:latest .
-          # docker run -d -p 8080:8080 helidon-demo:latest
-          docker tag helidon-demo sreedockerhub19/helidon-demo:latest
-          docker push sreedockerhub19/helidon-demo:latest
+          docker build -t helidon-demo-kotlin:latest .
+          # docker run -p 8080:8080 helidon-demo-kotlin:latest
+          docker tag helidon-demo-kotlin sreedockerhub19/helidon-demo-kotlin:latest
+          docker push sreedockerhub19/helidon-demo-kotlin:latest
