@@ -1,139 +1,37 @@
-name: Run Jupyter Notebook and Generate HTML
+name: Rust CI
 
 on:
   push:
-    branches:
-      - python_
+    branches: [ rust_ ]
+  pull_request:
+    branches: [ rust_ ]
 
 jobs:
-  run_notebook:
+  build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        problem: [1A, 1C]  # Add more problems here (e.g., 1B, 1D)
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
+    - name: Checkout repository
+      uses: actions/checkout@v2
 
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.8'
-      
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20'
+    - name: Install C++ Compiler
+      run: sudo apt-get install g++
 
-            # Step 2: Set up JDK 21
-      - name: Set up JDK 21
-        uses: actions/setup-java@v2
-        with:
-          java-version: '21'
-          distribution: 'temurin'
+    - name: Set up Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable  # Use the stable version of Rust
 
-      - name: Install Clojure CLI
-        uses: DeLaGuardo/setup-clojure@master
-        with:
-          cli: 1.11.1.1403
+    - name: Run all Rust files in the execute folder
+      run: |
+        for file in execute/*.rs; do
+          rustc "$file" && ./$(basename "$file" .rs)
+        done
 
-      - name: Run Nielsen project
-        run: |  
-          cd Nielsen && find src -name "*.java" | xargs javac -d out && java -cp out com.ims.Main
-
-      - name: Install nbb
-        run: |
-          npm install nbb -g
-          nbb -e '(+ 1 2 3)'
-          npm install csv-parse shelljs term-size zx
-
-      - name: Install Kotlin compiler
-        run: |
-          curl -s "https://get.sdkman.io" | bash
-          source "$HOME/.sdkman/bin/sdkman-init.sh"
-          sdk install kotlin 2.1.0
-          kotlinc -version
-    
-      # Step 3: Install Maven
-      - name: Install Maven
-        run: sudo apt-get install -y maven
-
-      # Step 4: Download Maven dependencies
-      - name: Download Maven Dependencies
-        run: |
-         mvn dependency:copy-dependencies -DoutputDirectory=libs
-         mvn clean compile exec:java < input.txt
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install jupyter nbconvert
-
-      - name: Run scripts
-        run: |
-          python test.py
-
-      - name: Run Jupyter Notebook
-        run: |
-          cd execute
-          jupyter nbconvert --to notebook --execute notebook.ipynb --output executed_notebook.ipynb
-          cd ..
-
-      - name: Convert Executed Notebook to HTML
-        run: |
-          cd execute
-          jupyter nbconvert --to html executed_notebook.ipynb --output executed_notebook
-          cd ..
-
-      - name: List files
-        run: ls -la  # Debugging step
-
-      # - name: Upload Notebook and HTML as Artifacts
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: executed_notebooks
-      #     path: |
-      #       execute/executed_notebook.ipynb
-      #       execute/executed_notebook.html
-
-      - name: Execute direct files in Clojure
-        run: |
-          cd direct && chmod +x run.sh
-          echo '======Clojure======'
-          echo "======${{ matrix.problem }}======"
-          ./run.sh ${{ matrix.problem }}.clj
-
-      - name: Execute direct files in ClojureScript
-        run: |
-          cd direct && chmod +x run.sh
-          echo '======ClojureScript======'
-          echo "======${{ matrix.problem }}======"
-          ./run.sh ${{ matrix.problem }}.cljs
-
-      - name: Execute direct files in Kotlin
-        run: |
-          cd direct && chmod +x run.sh
-          echo '======Kotlin======'
-          echo "======${{ matrix.problem }}======"
-          ./run.sh ${{ matrix.problem }}.kt
-
-      - name: Execute direct files in Python
-        run: |
-          cd direct && chmod +x run.sh
-          echo '======Python======'
-          echo "======${{ matrix.problem }}======"
-          ./run.sh ${{ matrix.problem }}.py
-
-      - name: Execute direct files in Java
-        run: |
-          cd direct && chmod +x run.sh
-          echo '======Java======'
-          echo "======${{ matrix.problem }}======"
-          ./run.sh ${{ matrix.problem }}.java
-
-      - name: Compare outputs
-        run: |
-          cd direct && chmod +x run.sh
-          chmod +x compare_outputs.sh
-          ./compare_outputs.sh ${{ matrix.problem }}
+    - name: Run all individual Rust files
+      run: |
+          rustc _5_input.rs && cat <<EOF | ./_5_input
+          Hello
+          World
+          there
+          EOF
