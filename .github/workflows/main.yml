@@ -1,37 +1,59 @@
-name: Rust CI
+name: Scala CI
 
 on:
   push:
-    branches: [ rust_ ]
-  pull_request:
-    branches: [ rust_ ]
+    branches:
+      - scala_
+
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        scala-version: [2.13.8, 3.3.1] # Scala versions to test
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Install C++ Compiler
-      run: sudo apt-get install g++
+      - name: Run Shell command
+        run: chmod +x curl_.sh && ./curl_.sh
 
-    - name: Set up Rust
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable  # Use the stable version of Rust
+      - name: Set up JDK 21
+        uses: actions/setup-java@v2
+        with:
+          java-version: '21'
+          distribution: 'temurin'
 
-    - name: Run all Rust files in the execute folder
-      run: |
-        for file in execute/*.rs; do
-          rustc "$file" && ./$(basename "$file" .rs)
-        done
+      - name: Set up Scala
+        uses: olafurpg/setup-scala@v12
+        with:
+          scala-version: ${{ matrix.scala-version }}
 
-    - name: Run all individual Rust files
-      run: |
-          rustc _5_input.rs && cat <<EOF | ./_5_input
-          Hello
-          World
-          there
-          EOF
+      - name: Cache sbt dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.sbt/boot/scala*
+          key: ${{ runner.os }}-sbt-${{ hashFiles('**/*.sbt') }}-${{ matrix.scala-version }}
+          restore-keys: |
+            ${{ runner.os }}-sbt-
+
+      - name: Run tests with sbt
+        run: sbt test
+
+      - name: Compile and run Scala project
+        run: sbt run
+
+      - name: Run Scala code using sbt console
+        run: |
+          sbt console <<< 'println("""Hello,
+          Scala from sbt console!""" + """2""" + """
+          This is a multiline string!""")' | tail -n +8
+
+      - name: Run Scala code using sbt console again
+        run: |
+          sbt console <<< 'println("""Hello,
+          Scala from sbt console!""" + """2""" + """
+          This is a multiline string!""")' | awk '/\?2004h>/ {flag=1} flag {print}'

@@ -1,0 +1,28 @@
+plugins {
+    id 'scala'
+    id 'application'
+}
+
+repositories {
+    mavenCentral()
+}
+
+def scalaVersion = findProperty("scalaVersion") ?: "2.13.11"
+def scalaLibArtifact = scalaVersion.startsWith("3") ? 
+    "org.scala-lang:scala3-library_3:${scalaVersion}" : 
+    "org.scala-lang:scala-library:${scalaVersion}"
+
+dependencies {
+    implementation scalaLibArtifact
+    testImplementation scalaVersion.startsWith("3") ?
+        "org.scalatest:scalatest_3:${scalaVersion}" :
+        "org.scalatest:scalatest_2.13:3.2.17"
+}
+
+application {
+    mainClass = 'Main'
+}
+
+tasks.withType(ScalaCompile) {
+    scalaCompileOptions.additionalParameters = ["-deprecation", "-feature"]
+}
