@@ -1,6 +1,8 @@
 .DS_Store
 execute/*.class
 .idea
+.mypy_cache
+elm-stuff
 .gradle/
 build/
 target/

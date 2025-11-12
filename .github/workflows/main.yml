@@ -1,31 +1,23 @@
-name: Build and Run Pascal Program
+name: Perl Script CI
 
 on:
   push:
     branches:
-      - pascal_  # or your default branch name
+      - perl_
   pull_request:
     branches:
-      - pascal_  # or your default branch name
+      - perl_
 
 jobs:
-  build:
-    runs-on: ubuntu-latest  # You can change to other operating systems like 'windows-latest' if necessary
+  perl:
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Install Free Pascal
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y fpc  # Installs Free Pascal compiler
+      - name: Install Perl
+        run: sudo apt-get install -y perl
 
-      - name: Compile Pascal Program
-        run: |
-          fpc hello.pas  # Compiles the Pascal file
-
-      - name: Run Pascal Program
-        run: |
-          ./hello  # Executes the compiled Pascal program
-
+      - name: Run Perl script
+        run: perl script.pl
