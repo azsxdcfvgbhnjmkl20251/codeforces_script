@@ -1,53 +1,63 @@
-name: Run GUI Application with Xvfb
+name: CI
 
 on:
   push:
     branches:
-      - scilab_
-
+      - solidity_
 jobs:
-  run-with-xvfb:
+  build:
+
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y openjdk-11-jdk  # Install required dependencies
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '18'
 
-    - name: Install Scilab
-      run: |
-        wget https://www.scilab.org/download/6.1.1/scilab-6.1.1.bin.linux-x86_64.tar.gz
-        tar -xzf scilab-6.1.1.bin.linux-x86_64.tar.gz
-        sudo mv scilab-6.1.1 /opt/scilab
-        sudo ln -s /opt/scilab/bin/scilab-cli /usr/local/bin/scilab-cli
+      - name: Install dependencies
+        run: npm install && npm install --save-dev hardhat
 
-    - name: Install libtinfo5
-      run: |
-        # Download the libtinfo5 package
-        wget http://archive.ubuntu.com/ubuntu/pool/main/n/ncurses/libtinfo5_6.1-1ubuntu1_amd64.deb
-        # Install the package using dpkg
-        sudo dpkg -i libtinfo5_6.1-1ubuntu1_amd64.deb
-        # Fix any missing dependencies
-        sudo apt-get install -f -y
+      - name: Compile Solidity contracts
+        run: npx hardhat compile
 
-    - name: Run all SCILAB files in the folder
-      run: |
-        mkdir -p output
-        # Make sure the script is executable
-        chmod +x ./run_all_scilab_files.sh
-        # Execute the shell script that runs all .sci files
-        ./run_all_scilab_files.sh
+      - name: Run tests
+        run: npx hardhat test
 
-    - name: Run Scilab with GUI
-      run: |
-        scilab-cli -nb -e "disp('Hello from inline Scilab!');"  # Run Scilab or your GUI application
+      - name: Start Hardhat node
+        run: |
+          npx hardhat node & sleep 5 
+          
+      - name: Start sol in js scripts
+        run: |
+          npx hardhat run scripts/deploy.js --network localhost && node scripts/solidity_in_js.js
 
-    # - name: Upload plot artifact
-    #   uses: actions/upload-artifact@v4
-    #   with:
-    #     name: all-plots
-    #     path: output  # Path to the generated plot files
+      - name: Start sol in js_1 scripts
+        run: |
+          node scripts/solidity_in_js_1.js
+      
+      
+      # The ampersand (&) runs the command in the background.
+
+      # - name: Deploy and display message
+      #   run: npx hardhat run scripts/deploy.js --network localhost
+
+      # - name: Get message
+      #   run: |
+      #     node -e "
+      #     const { ethers } = require('hardhat');
+      #     async function main() {
+      #       const HelloWorld = await ethers.getContractFactory('HelloWorld');
+      #       const helloWorld = await HelloWorld.deploy();
+      #       await helloWorld.deployed();
+      #       const message = await helloWorld.message();
+      #       console.log('Message from contract:', message);
+      #     }
+      #     main().catch((error) => {
+      #       console.error(error);
+      #       process.exit(1);
+      #     });
+      #     "

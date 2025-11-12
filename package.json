@@ -1,0 +1,21 @@
+{
+  "name": "codeforces_script",
+  "version": "1.0.0",
+  "description": "",
+  "main": "50A.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "pystart": "for file in execute/*.js; do node \"$file\"; done",
+    "pystartmac": "for file in mac_execute/*.js; do node \"$file\"; done"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "hardhat": "^2.22.15"
+  },
+  "dependencies": {
+    "ethers": "^6.13.4",
+    "solc": "^0.8.28"
+  }
+}
