@@ -45,7 +45,6 @@ jobs:
 
     # -------- Build & Push Ruby Server Docker Image --------
     - name: Build and push Ruby HTTP Server image
-      working-directory: ./ruby_server
       run: |
         docker build -t ruby-http-server:latest .
         docker tag ruby-http-server:latest sreedockerhub19/ruby-http-server:latest
